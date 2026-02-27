@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Planner Pro</title>
+    <style>
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 15px; margin: 0; }
+        .container { background: white; width: 100%; max-width: 480px; padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 10px; }
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 20px; font-size: 1.5rem; }
+        .timer-info { font-size: 11px; color: #999; text-align: center; margin-bottom: 10px; }
+        .section { margin-bottom: 15px; padding: 15px; border-radius: 12px; border: 1px solid #eee; }
+        .new-section { border-left: 6px solid #34a853; background: #f8fff9; }
+        .rev-section { border-left: 6px solid #fbbc04; background: #fffdf2; }
+        strong { display: block; margin-bottom: 10px; color: #444; font-size: 0.9rem; text-transform: uppercase; }
+        .task-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .smart-btn { cursor: pointer; border: none; border-radius: 10px; font-weight: bold; width: 100%; transition: all 0.3s ease; padding: 18px; font-size: 1.1rem; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-blue { background: #1a73e8; }
+        .btn-green { background: #34a853; }
+        input[type="checkbox"] { width: 24px; height: 24px; cursor: pointer; accent-color: #34a853; }
+        #status { font-size: 0.85rem; text-align: center; margin-top: 15px; color: #5f6368; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Study Planner</h2>
+    <div id="clock" class="timer-info">Syncing...</div>
+
+    <div class="section new-section">
+        <strong>New Assignments</strong>
+        <div id="new-list"><i>No tasks generated.</i></div>
+    </div>
+
+    <div class="section rev-section">
+        <strong>Revision</strong>
+        <div id="rev-list"><i>No tasks generated.</i></div>
+    </div>
+
+    <button id="mainActionBtn" class="smart-btn btn-blue" onclick="handleButtonClick()">
+        1. Fetch & Generate Tasks
+    </button>
+    
+    <div id="status">Ready</div>
+</div>
+
+<script>
+// PASTE YOUR NEW /exec URL HERE
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCINRjL_Reb1ki9X-dohw2_Zt_D8PM_aInheV3XmoWLgRascThrlraDW5ESix2kfaZ3g/exec";
+
+const curriculum = {
+    "Math": ["Numbers", "H.C.F. and L.C.M. of Numbers", "Decimal Fractions", "Simplification", "Square Roots and Cube Roots", "Average", "Problems on Numbers", "Problems on Ages", "Surds and Indices", "Percentage", "Profit and Loss", "Ratio and Proportion", "Partnership", "Chain Rule", "Time and Work", "Pipes and Cisterns", "Time and Distance", "Problems on Trains", "Boats and Streams", "Alligation or Mixture", "Simple Interest", "Compound Interest", "Area", "Volume and Surface Area"],
+    "GK": [
+        "Ancient History (Stone Age)", "Ancient History (Indus Valley Civilization)", "Ancient History (Vedic Age)", "Ancient History (Buddhism & Jainism)", "Ancient History (Mahajanapadas)", "Ancient History (Magadha Empire)", "Ancient History (Mauryan Empire)", "Ancient History (Post Mauryan Empire)", "Ancient History (Gupta Empire)", "Ancient History (Post Gupta Empire)", "Ancient History (Architecture in Ancient India)", "Ancient History (Literature in Ancient History)", "Ancient History (Sangam Age)",
+        "Medieval History (Early Medieval Period)", "Medieval History (Muslim Invasion)", "Medieval History (Delhi Sultanate - Slave & Khalji Dynasty)", "Medieval History (Delhi Sultanate - Tughlaq, Sayyid & Lodi)", "Medieval History (Delhi Sultanate - Administration, Art, Misc.)", "Medieval History (Vijayanagara Empire)", "Medieval History (Provincial Dynasty of North India & Deccan)", "Medieval History (Babur)", "Medieval History (Humayun & Sher Shah)", "Medieval History (Akbar)", "Medieval History (Jahangir)", "Medieval History (Shah Jahan)", "Medieval History (Aurangzeb)", "Medieval History (Mughal Administration)", "Medieval History (Music & Paintings of Mughal Period)", "Medieval History (Mughal Literature)", "Medieval History (Mughal Period Miscellaneous)", "Medieval History (Disintegration of the Mughal Empire)", "Medieval History (Marathas)", "Medieval History (Sikhism)",
+        "Modern History (Advent Of Europeans)", "Modern History (East India Company & Nawabs of Bengal)", "Modern History (Governor General Of India)", "Modern History (Regional States - Punjab and Mysore)", "Modern History (Economic Impact of British Rule of India)", "Modern History (Revolt of 1857)", "Modern History (Tribal, Peasant Movement & Civil Uprising)", "Modern History (Development of Education in Modern India)", "Modern History (Press in Modern India)", "Modern History (Political Organizations Established Before INC)", "Modern History (Socio-Religious Movements)", "Modern History (Indian National Congress)", "Modern History (Moderates & Extremists)", "Modern History (Revolutionary Movements)", "Modern History (Partition of Bengal & Swadeshi Movement)", "Modern History (Congress Session Banaras, Calcutta & Surat)", "Modern History (Formation of Muslim league)", "Modern History (Morley-Minto Reforms)", "Modern History (Delhi Darbar & Change of Capital)", "Modern History (Lucknow Session of Congress)", "Modern History (Home Rule League Movement)", "Modern History (Gandhi & his Early Movements)", "Modern History (Peasant Movement & Kisan Sabha)", "Modern History (Trade Union & Communist Party)", "Modern History (Rowlatt Act & Jallianwala Bagh Massacre)", "Modern History (Khilafat Movement)", "Modern History (Non Cooperation Movement)", "Modern History (Formation of Swaraj Party)", "Modern History (Simon Commission)", "Modern History (Lahore Session & Complete Independence)", "Modern History (Civil Disobedience Movement)", "Modern History (Gandhi-Irwin Pact & Karachi Session of Congress)", "Modern History (Karachi Session of Congress)", "Modern History (Round Table Conference)", "Modern History (Communal Award and Poona Pact)", "Modern History (Congress Socialist Party)", "Modern History (Provincial Election & Formation of Cabinet)", "Modern History (Tripuri Crisis of Congress)", "Modern History (Indian Princely States)", "Modern History (Second World War)", "Modern History (Demand for Pakistan)", "Modern History (Individual Satyagraha)", "Modern History (Cripps Mission)", "Modern History (Quit India Movement)", "Modern History (Subhash Chandra Bose & Azad Hind Fauj)", "Modern History (Cabinet Mission Plan)", "Modern History (Constituent Assembly)", "Modern History (Formation of Interim Government)", "Modern History (Partition of India & Independence)",
+        "Physics (Measurement)", "Physics (Measuring Devices & Scales)", "Physics (Mechanics)", "Physics (Motion Under Gravity)", "Physics (Physical Properties of matter)", "Physics (Optics)", "Physics (Heat and Thermodynamics)", "Physics (Wave Motion)", "Physics (Sounds)", "Physics (Electric current)", "Physics (Conductivity)", "Physics (Nuclear Physics)", "Physics (Space)", "Physics (Defence Technology)", "Physics (Scientists & Inventions)", "Physics (Miscellaneous)",
+        "Chemistry (Atomic Structure)", "Chemistry (Physical and Chemical Changes, Solution)", "Chemistry (Inorganic Chemistry)", "Chemistry (Metals, Minerals, Ores Properties, Uses)", "Chemistry (Non Metals)", "Chemistry (Alloys)", "Chemistry (Organic Chemistry)", "Chemistry (Food Preservation, Nutrition, Medicine)", "Chemistry (Detergent & Soap)", "Chemistry (Fertilizers)", "Chemistry (Miscellaneous)",
+        "Biology (Subdivisions of Biology)", "Biology (Evolution of life)", "Biology (Taxonomy)", "Biology (Cell)", "Biology (Heredity)", "Biology (Biofertilizers)", "Biology (Skeletal And muscle system)", "Biology (Digestive System)", "Biology (Excretory System)", "Biology (Circulatory System)", "Biology (Nervous System)", "Biology (Respiratory System)", "Biology (Vitamins & Nutrition)", "Biology (Plant Physiology - Photosynthesis & Plan...)", "Biology (Plant Hormones & Plant Reproduction)", "Biology (Plants Economic Importance)", "Biology (Viral Diseases)", "Biology (Bacterial Diseases)", "Biology (Fungal Diseases)", "Biology (Genetic Disorders)",
+        "Economics (Nature Of Indian Economy)", "Economics (National Income)", "Economics (Sustainable Economic Development)", "Economics (Agriculture & Allied Sector)", "Economics (Industrial Sector)", "Economics (Tertiary Sector)", "Economics (Fiscal Policy & Revenue)", "Economics (Planning)", "Economics (Money and Banking)", "Economics (Human Development)", "Economics (Employment & Welfare Schemes)", "Economics (Poverty & Unemployment)", "Economics (International Trade)", "Economics (Foreign Exchange, FDI & External Debt)", "Economics (International Organizations)", "Economics (India - Population)", "Economics (India - Urbanization)", "Economics (World Population & Urbanization)", "Economics (Miscellaneous)",
+        "Polity (Constitutional Development)", "Polity (Constituent Assembly & Making Of Constit...)", "Polity (Important Committees of Constituent Asse...)", "Polity (Sources of Indian Constitution)", "Polity (Parts Of Indian Constitution)", "Polity (Articles & Schedules)", "Polity (Preamble Of Indian Constitution)", "Polity (Governance System)", "Polity (National Symbol)", "Polity (State & Union Territory)", "Polity (Citizenship)", "Polity (Fundamental Rights & Duties)", "Polity (Directive Principle Of State Policy)", "Polity (Amendment Of Constitution)", "Polity (Governor)", "Polity (President)", "Polity (Vice President)", "Polity (Attorney General & CAG)", "Polity (PM & Council Of Minister)", "Polity (Local Government)", "Polity (Parliament (Part - 1))", "Polity (Emergency Provisions)", "Polity (Parliament Rajya Sabha (Part - 2))", "Polity (Parliament (Part - 3))", "Polity (State Legislature MCQ)", "Polity (Election Commission Of India)", "Polity (Parliament (Part - 4))"
+    ],
+    "English": ["Noun", "Question tag", "Tense", "Adjective", "Article", "Verb", "Jumble", "Narration", "Voice", "Adverb", "One Word", "Idiom", "Synonyms", "Antonyms"]
+};
+
+window.onload = function() {
+    const tasks = JSON.parse(localStorage.getItem('currentSession'));
+    if (tasks && tasks.length > 0) {
+        updateButtonState(true);
+        renderFromStorage();
+    }
+    startAutomation();
+};
+
+function startAutomation() {
+    setInterval(() => {
+        const now = new Date();
+        const h = now.getHours(); const m = now.getMinutes();
+        document.getElementById('clock').innerText = "Current Time: " + now.toLocaleTimeString();
+        if (h === 0 && m === 0) submitToSheet(true);
+        if (h === 0 && m === 1) generateSession();
+    }, 30000);
+}
+
+function handleButtonClick() {
+    const btn = document.getElementById('mainActionBtn');
+    if (btn.classList.contains('btn-blue')) generateSession();
+    else submitToSheet(false);
+}
+
+async function generateSession() {
+    const status = document.getElementById('status');
+    status.innerText = "Checking Completed Topics...";
+    try {
+        const response = await fetch(SCRIPT_URL);
+        const history = await response.json();
+        let sessionTasks = [];
+
+        Object.keys(curriculum).forEach(sub => {
+            // UPDATED FILTER: Only removes from New Tasks if found in COMPLETED columns
+            const availableNew = curriculum[sub].filter(t => !history.completed.includes(t));
+            const newTopic = availableNew[Math.floor(Math.random() * availableNew.length)];
+            if(newTopic) sessionTasks.push({ subject: sub, topic: newTopic, type: "NEW", completed: false });
+
+            // REVISION: Only picks topics that HAVE been completed
+            const availableRev = curriculum[sub].filter(t => history.completed.includes(t));
+            const revTopic = availableRev[Math.floor(Math.random() * availableRev.length)];
+            if(revTopic) sessionTasks.push({ subject: sub, topic: revTopic, type: "REV", completed: false });
+        });
+
+        localStorage.setItem('currentSession', JSON.stringify(sessionTasks));
+        renderFromStorage();
+        updateButtonState(true);
+        status.innerText = "Session Generated!";
+    } catch (e) {
+        status.innerText = "Fetch error. Check URL.";
+    }
+}
+
+function renderFromStorage() {
+    const tasks = JSON.parse(localStorage.getItem('currentSession')) || [];
+    const newList = document.getElementById('new-list');
+    const revList = document.getElementById('rev-list');
+    newList.innerHTML = ''; revList.innerHTML = '';
+    tasks.forEach((task, index) => {
+        const row = `<div class="task-row"><span><b>${task.subject}:</b> ${task.topic}</span>
+                     <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})"></div>`;
+        if(task.type === "NEW") newList.innerHTML += row;
+        else revList.innerHTML += row;
+    });
+}
+
+function toggleTask(index) {
+    let tasks = JSON.parse(localStorage.getItem('currentSession'));
+    tasks[index].completed = !tasks[index].completed;
+    localStorage.setItem('currentSession', JSON.stringify(tasks));
+}
+
+async function submitToSheet(isAuto) {
+    const tasks = JSON.parse(localStorage.getItem('currentSession'));
+    if(!tasks) return;
+    document.getElementById('status').innerText = "Saving...";
+    await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(tasks) });
+    localStorage.removeItem('currentSession');
+    renderFromStorage();
+    updateButtonState(false);
+    document.getElementById('status').innerText = "Day Logged.";
+    if(!isAuto) alert("Data saved successfully!");
+}
+
+function updateButtonState(isReady) {
+    const btn = document.getElementById('mainActionBtn');
+    btn.innerText = isReady ? "2. Submit All to Google Sheet" : "1. Fetch & Generate Tasks";
+    btn.className = isReady ? "smart-btn btn-green" : "smart-btn btn-blue";
+}
+</script>
+</body>
+</html>
