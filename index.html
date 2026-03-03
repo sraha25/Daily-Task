@@ -9,7 +9,7 @@
         .container { background: white; width: 100%; max-width: 480px; padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 10px; }
         h2 { text-align: center; color: #1a73e8; margin-bottom: 20px; font-size: 1.5rem; }
         .timer-info { font-size: 11px; color: #999; text-align: center; margin-bottom: 10px; }
-        .section { margin-bottom: 15px; padding: 15px; border-radius: 12px; border: 1px solid #eee; }
+        .section { margin-bottom: 15px; padding: 15px; border-radius: 12px; border: 1px solid #eee; display: none; } /* Hidden by default */
         .new-section { border-left: 6px solid #34a853; background: #f8fff9; }
         .rev-section { border-left: 6px solid #fbbc04; background: #fffdf2; }
         strong { display: block; margin-bottom: 10px; color: #444; font-size: 0.9rem; text-transform: uppercase; }
@@ -27,14 +27,14 @@
     <h2>Study Planner</h2>
     <div id="clock" class="timer-info">Syncing...</div>
 
-    <div class="section new-section">
+    <div id="new-section-wrapper" class="section new-section">
         <strong>New Assignments</strong>
-        <div id="new-list"><i>No tasks generated.</i></div>
+        <div id="new-list"></div>
     </div>
 
-    <div class="section rev-section">
+    <div id="rev-section-wrapper" class="section rev-section">
         <strong>Revision</strong>
-        <div id="rev-list"><i>No tasks generated.</i></div>
+        <div id="rev-list"></div>
     </div>
 
     <button id="mainActionBtn" class="smart-btn btn-blue" onclick="handleButtonClick()">
@@ -45,7 +45,6 @@
 </div>
 
 <script>
-// PASTE YOUR NEW /exec URL HERE
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCINRjL_Reb1ki9X-dohw2_Zt_D8PM_aInheV3XmoWLgRascThrlraDW5ESix2kfaZ3g/exec";
 
 const curriculum = {
@@ -97,15 +96,19 @@ async function generateSession() {
         let sessionTasks = [];
 
         Object.keys(curriculum).forEach(sub => {
-            // UPDATED FILTER: Only removes from New Tasks if found in COMPLETED columns
+            // New Task Logic
             const availableNew = curriculum[sub].filter(t => !history.completed.includes(t));
-            const newTopic = availableNew[Math.floor(Math.random() * availableNew.length)];
-            if(newTopic) sessionTasks.push({ subject: sub, topic: newTopic, type: "NEW", completed: false });
+            if (availableNew.length > 0) {
+                const newTopic = availableNew[Math.floor(Math.random() * availableNew.length)];
+                sessionTasks.push({ subject: sub, topic: newTopic, type: "NEW", completed: false });
+            }
 
-            // REVISION: Only picks topics that HAVE been completed
+            // Revision Task Logic: Only add if there are completed topics to choose from
             const availableRev = curriculum[sub].filter(t => history.completed.includes(t));
-            const revTopic = availableRev[Math.floor(Math.random() * availableRev.length)];
-            if(revTopic) sessionTasks.push({ subject: sub, topic: revTopic, type: "REV", completed: false });
+            if (availableRev.length > 0) {
+                const revTopic = availableRev[Math.floor(Math.random() * availableRev.length)];
+                sessionTasks.push({ subject: sub, topic: revTopic, type: "REV", completed: false });
+            }
         });
 
         localStorage.setItem('currentSession', JSON.stringify(sessionTasks));
@@ -121,13 +124,28 @@ function renderFromStorage() {
     const tasks = JSON.parse(localStorage.getItem('currentSession')) || [];
     const newList = document.getElementById('new-list');
     const revList = document.getElementById('rev-list');
-    newList.innerHTML = ''; revList.innerHTML = '';
+    
+    newList.innerHTML = ''; 
+    revList.innerHTML = '';
+    
+    let hasNew = false;
+    let hasRev = false;
+
     tasks.forEach((task, index) => {
         const row = `<div class="task-row"><span><b>${task.subject}:</b> ${task.topic}</span>
                      <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})"></div>`;
-        if(task.type === "NEW") newList.innerHTML += row;
-        else revList.innerHTML += row;
+        if(task.type === "NEW") {
+            newList.innerHTML += row;
+            hasNew = true;
+        } else {
+            revList.innerHTML += row;
+            hasRev = true;
+        }
     });
+
+    // Control visibility of the section containers
+    document.getElementById('new-section-wrapper').style.display = hasNew ? 'block' : 'none';
+    document.getElementById('rev-section-wrapper').style.display = hasRev ? 'block' : 'none';
 }
 
 function toggleTask(index) {
